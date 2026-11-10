@@ -1,0 +1,104 @@
+# Drawer, self-hosted. `cp .env.example .env`, fill it in, then `docker compose up -d --build`.
+# README.md walks through it, Tailscale included.
+services:
+  drawer:
+    build: .
+    image: drawer:local
+    restart: unless-stopped
+    # Drawer has no login: it answers on this machine only, and Tailscale (or another HTTPS proxy you trust) is the
+    # way in. Never publish this port to the internet.
+    ports:
+      - "127.0.0.1:${DRAWER_PORT:-3000}:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      WHISPER_URL: http://whisper:8080
+    extra_hosts:
+      # So DRAWER_LOCAL_URL can point at an Ollama running on this machine: http://host.docker.internal:11434/v1
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - drawer-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Speech to text for voice notes and spoken questions, on the CPU (about 400 MB of memory).
+  whisper:
+    image: ghcr.io/ggml-org/whisper.cpp@sha256:cdfceef9caa5fed3efaf07bfc7d1ea0e43d28536e1521f448570b0ab02886abb
+    restart: unless-stopped
+    command: ["whisper-server --host 0.0.0.0 --port 8080 -m /models/ggml-small-q5_1.bin --convert -l auto -t 3 -bs 1 -bo 1"]
+    volumes:
+      - whisper-models:/models:ro
+    depends_on:
+      whisper-model:
+        condition: service_completed_successfully
+    security_opt:
+      - no-new-privileges:true
+
+  # Downloads Whisper's model (about 190 MB) the first time, then does nothing.
+  whisper-model:
+    image: curlimages/curl:8.11.1
+    user: "0:0"
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        [ -s /models/ggml-small-q5_1.bin ] ||
+        (curl -fL --retry 3 -o /models/ggml-small-q5_1.bin.part
+        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin
+        && mv /models/ggml-small-q5_1.bin.part /models/ggml-small-q5_1.bin)
+    volumes:
+      - whisper-models:/models
+
+  # Optional: a local model in a container, for machines without Ollama installed.
+  #   docker compose --profile ollama up -d
+  #   docker compose exec ollama ollama pull qwen3.5:9b
+  # and in .env: DRAWER_LOCAL_URL=http://ollama:11434/v1, DRAWER_LOCAL_MODEL=qwen3.5:9b
+  # For an NVIDIA GPU, add the `deploy.resources.reservations.devices` block from Docker's GPU guide.
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:0.40.10
+    restart: unless-stopped
+    environment:
+      OLLAMA_CONTEXT_LENGTH: "16384"
+    volumes:
+      - ollama-models:/root/.ollama
+
+  # One-off: the WhatsApp import (README.md). Not started with the rest.
+  import:
+    profiles: ["tools"]
+    build:
+      context: .
+      target: import
+    image: drawer-import:local
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      WHISPER_URL: http://whisper:8080
+      HOME: /tmp
+    volumes:
+      - drawer-data:/data
+      - ./import:/import:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  drawer-data:
+  whisper-models:
+  ollama-models:

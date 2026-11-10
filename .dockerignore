@@ -1,0 +1,12 @@
+node_modules
+build
+.svelte-kit
+.scratch
+.playwright-cli
+.taste-skill
+import
+data
+test-results
+playwright-report
+.env
+.git

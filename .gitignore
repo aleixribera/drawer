@@ -1,0 +1,16 @@
+/import/
+/data/
+node_modules/
+.env
+.svelte-kit/
+build/
+test-results/
+playwright-report/
+.scratch/
+.playwright-cli/
+/private/
+CLAUDE.local.md
+deploy.local.env
+/desktop/dist/
+/desktop/node_modules/
+/desktop/src/companion.mjs

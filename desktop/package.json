@@ -1,0 +1,28 @@
+{
+  "name": "drawer-desktop",
+  "productName": "Drawer",
+  "version": "0.1.0",
+  "description": "Drawer on Windows and Linux: its own window, the tray, the hotkeys, and what other devices send landing on the clipboard.",
+  "author": "aleixribera",
+  "license": "MIT",
+  "homepage": "https://github.com/aleixribera/drawer",
+  "private": true,
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "companion": "node scripts/companion.mjs",
+    "start": "npm run companion && electron .",
+    "dist": "npm run companion && electron-builder --publish never",
+    "release": "npm run companion && electron-builder --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.12"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0"
+  },
+  "allowScripts": {
+    "electron-winstaller": false
+  }
+}

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self'" />
+    <title>Drawer</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --ground: #f4f3f1;
+        --surface: #ffffff;
+        --border: #e4e3e0;
+        --control: #d3d2ce;
+        --text: #0a0a0a;
+        --muted: #5f5e5a;
+        --primary: #141414;
+        --on-primary: #ffffff;
+        --hue: #1d5fbf;
+        --negative: #c4242a;
+        --font: 'Geist Variable', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ground: #0d0d0c;
+          --surface: #161615;
+          --border: #262624;
+          --control: #43423f;
+          --text: #f4f3f1;
+          --muted: #b4b3ae;
+          --primary: #f4f3f1;
+          --on-primary: #0d0d0c;
+          --hue: #6ea2ef;
+          --negative: #e5566f;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--ground);
+        color: var(--text);
+        font: 14px/1.5 var(--font);
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 560px;
+        padding: 72px 32px 48px;
+      }
+      @media (max-width: 520px) {
+        main {
+          padding: 40px 16px;
+        }
+      }
+      .mark {
+        display: block;
+        width: 28px;
+        height: 28px;
+        margin-bottom: 32px;
+        border-radius: 6px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+        line-height: 1.25;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        text-wrap: balance;
+      }
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        text-wrap: pretty;
+      }
+      form {
+        margin-top: 28px;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      @media (max-width: 520px) {
+        .row {
+          flex-direction: column;
+        }
+      }
+      input {
+        flex: 1;
+        min-width: 0;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid var(--control);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text);
+        font: 14px var(--font-mono);
+      }
+      input:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--hue);
+        outline-offset: 2px;
+      }
+      input[aria-invalid='true'] {
+        border-color: var(--negative);
+      }
+      button {
+        height: 40px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--primary);
+        color: var(--on-primary);
+        font: 500 14px var(--font);
+        cursor: pointer;
+        transition: opacity 120ms;
+        touch-action: manipulation;
+      }
+      button:hover {
+        opacity: 0.88;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: progress;
+      }
+      button.quiet {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--control);
+      }
+      .error {
+        margin: 10px 0 0;
+        color: var(--negative);
+      }
+      .error:empty {
+        display: none;
+      }
+      .problem {
+        margin: 0 0 28px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--negative);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text);
+      }
+      .problem p {
+        margin: 0 0 12px;
+        color: var(--text);
+      }
+      .hint {
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        font-size: 13px;
+      }
+      code {
+        font: 13px var(--font-mono);
+        color: var(--text);
+      }
+      .version {
+        font: 12px var(--font-mono);
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img class="mark" src="assets/icon.png" alt="" width="28" height="28" />
+      <div class="problem" id="problem" hidden>
+        <p id="problem-text"></p>
+        <button class="quiet" type="button" id="retry">Try again</button>
+      </div>
+      <h1>Where is your Drawer?</h1>
+      <p>
+        The address you open Drawer at in the browser. The app shows Drawer in its own window, receives what other
+        devices send to this computer, and adds the hotkeys.
+      </p>
+      <form id="form" novalidate>
+        <label for="url">Drawer’s address</label>
+        <div class="row">
+          <input
+            id="url"
+            name="url"
+            type="url"
+            inputmode="url"
+            autocomplete="url"
+            spellcheck="false"
+            autocapitalize="off"
+            placeholder="https://your-machine.your-tailnet.ts.net…"
+            aria-describedby="url-error"
+            required
+          />
+          <button type="submit" id="go">Open Drawer</button>
+        </div>
+        <p class="error" id="url-error" role="alert" aria-live="polite"></p>
+      </form>
+      <p class="hint">
+        Drawer runs on your own server and is reached over Tailscale. If the address doesn’t answer, check that this
+        computer is signed in to the same tailnet. <span class="version" id="version"></span>
+      </p>
+    </main>
+    <script>
+      const setup = window.drawerSetup;
+      const form = document.getElementById('form');
+      const input = document.getElementById('url');
+      const error = document.getElementById('url-error');
+      const go = document.getElementById('go');
+      document.getElementById('version').textContent = setup ? `App ${setup.version}` : '';
+
+      setup?.info().then((info) => {
+        if (!info) return;
+        input.value = info.url;
+        if (info.error) {
+          document.getElementById('problem-text').textContent = info.error;
+          document.getElementById('problem').hidden = false;
+        }
+        input.focus();
+        input.select();
+      });
+
+      document.getElementById('retry').addEventListener('click', () => setup?.retry());
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        error.textContent = '';
+        input.removeAttribute('aria-invalid');
+        go.disabled = true;
+        go.textContent = 'Checking…';
+        try {
+          const result = await setup.setUrl(input.value);
+          if (!result.ok) {
+            error.textContent = result.message;
+            input.setAttribute('aria-invalid', 'true');
+            input.focus();
+          }
+        } finally {
+          go.disabled = false;
+          go.textContent = 'Open Drawer';
+        }
+      });
+    </script>
+  </body>
+</html>
