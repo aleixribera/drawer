@@ -1,7 +1,7 @@
 {
   "name": "drawer-desktop",
   "productName": "Drawer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drawer on Windows and Linux: its own window, the tray, the hotkeys, and what other devices send landing on the clipboard.",
   "author": "aleixribera",
   "license": "MIT",
