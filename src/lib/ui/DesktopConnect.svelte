@@ -53,6 +53,8 @@
       if (!response.ok) throw new Error((await response.json().catch(() => null))?.message ?? `Drawer answered ${response.status}`);
       const { token } = (await response.json()) as { token: string };
       connected = await bridge.connect(token);
+      // The first connect turns on starting with the computer; show it.
+      app = (await bridge.info?.()) ?? app;
       if (!connected) problem = 'The app could not reach Drawer with the new token. Try again.';
     } catch (error) {
       problem = (error as Error).message;
