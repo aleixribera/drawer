@@ -9,6 +9,14 @@
   let { origin, device, token = null, tokenFor = null }: { origin: string; device: string; token?: string | null; tokenFor?: string | null } =
     $props();
 
+  /** Where the desktop app is downloaded from: the same releases it updates itself from. */
+  const RELEASES = 'https://github.com/aleixribera/drawer/releases';
+  // Inside the app there is nothing to download; its own Connect panel is on this page instead.
+  let inApp = $state(false);
+  $effect(() => {
+    inApp = 'drawerDesktop' in window;
+  });
+
   let chosen = $state<string | null>(null);
   const shown = $derived(chosen ?? tokenFor ?? device);
   const key = $derived(token && tokenFor === shown ? token : 'YOUR_TOKEN');
@@ -89,7 +97,21 @@
     </ol>
   {:else}
     {@const commands = shown === 'pc' ? windows : fedora}
-    <p class="muted lead">
+    {#if !inApp}
+      <p class="lead app">
+        <strong>The app.</strong>
+        {#if shown === 'pc'}
+          Download <a href="{RELEASES}/latest">the Windows installer</a> (Drawer-Setup), run it, and give it
+        {:else}
+          Download <a href="{RELEASES}/latest/download/Drawer-x86_64.AppImage">the AppImage</a>, make it executable
+          (<span class="mono nowrap">chmod +x</span>; Fedora also needs <span class="mono nowrap">fuse-libs</span>), open it, and give it
+        {/if}
+        <span class="mono">{origin}</span>. Then press Connect in Settings inside the app. It waits in the tray, has the
+        hotkeys below and updates itself.
+      </p>
+    {/if}
+    <p class="muted lead" class:or={!inApp}>
+      {#if !inApp}<strong>Or the companion</strong>, a single script instead of the app.{/if}
       The companion keeps and sends from the clipboard, and puts what other devices send here on the clipboard.
       {shown === 'pc' ? 'In PowerShell, with Node installed' : 'In a terminal'}{key === 'YOUR_TOKEN'
         ? `, after making a token for the ${shown === 'pc' ? 'PC' : 'laptop'} above (it replaces YOUR_TOKEN):`
@@ -123,6 +145,19 @@
   .lead + .steps,
   .lead + .code {
     margin-top: 12px;
+  }
+  .app {
+    margin: 0;
+  }
+  .app a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .or {
+    margin: 14px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
   }
   .steps {
     margin: 0;
